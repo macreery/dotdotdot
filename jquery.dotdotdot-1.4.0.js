@@ -274,7 +274,7 @@
 
 		$elem.empty();
 
-		var notx = 'table, thead, tbody, tfoot, tr, col, colgroup, object, embed, param, ol, ul, dl, select, optgroup, option, textarea, script, style';
+		var notx = 'table, thead, tbody, tfoot, tr, col, colgroup, object, embed, param, ol, ul, dl, select, optgroup, option, textarea, script, style, a';
 
 		for ( var a = 0, l = $elements.length; a < l; a++ )
 		{
