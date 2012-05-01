@@ -359,10 +359,9 @@
 		if ( !isTruncated )
 		{
 			var $w = $e.parent();
-			$e.remove();
-			$n = $w.contents().eq( -1 );
+			$w.replaceWith($e);
 
-			isTruncated = ellipsisElement( $n, $i, o, after );
+			isTruncated = true;
 		}
 
 		return isTruncated;
