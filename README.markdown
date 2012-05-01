@@ -1,7 +1,12 @@
-Fred Heusschen's dotdotdot jQuery library. The website is [here](http://dotdotdot.frebsite.nl/)
+Fred Heusschen's jQuery.dotdotdot library. The website is [here](http://dotdotdot.frebsite.nl/).
 
-I couldn't find a git repo for this anywhere, so I put it here so I can commit to it. I haven't actually made any changes yet, though.
+This branch is a fork of [icambron/dotdotdot](https://github.com/icambron/dotdotdot).
 
+To compile packed library:
+```
+head -n 13 jquery.dotdotdot-1.4.0.js > jquery.dotdotdot-1.4.0-packed.js
+perl jsPacker.pl -e62 -qs -i jquery.dotdotdot-1.4.0.js >> jquery.dotdotdot-1.4.0-packed.js
+```
 
 ## License (MIT)##
 
