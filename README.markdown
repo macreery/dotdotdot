@@ -4,8 +4,8 @@ This branch is a fork of [icambron/dotdotdot](https://github.com/icambron/dotdot
 
 To compile packed library:
 ```
-head -n 13 jquery.dotdotdot-1.4.0.js > jquery.dotdotdot-1.4.0-packed.js
-perl jsPacker.pl -e62 -qs -i jquery.dotdotdot-1.4.0.js >> jquery.dotdotdot-1.4.0-packed.js
+head -n 13 jquery.dotdotdot.js > jquery.dotdotdot-packed.js
+perl jsPacker.pl -e62 -qs -i jquery.dotdotdot.js >> jquery.dotdotdot-packed.js
 ```
 
 ## License (MIT)##
