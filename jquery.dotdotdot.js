@@ -1,5 +1,5 @@
 /*	
- *	jQuery dotdotdot 1.4.0
+ *	jQuery dotdotdot 1.5.1
  *	
  *	Copyright (c) 2012 Fred Heusschen
  *	www.frebsite.nl
@@ -11,6 +11,7 @@
  *	http://en.wikipedia.org/wiki/MIT_License
  *	http://en.wikipedia.org/wiki/GNU_General_Public_License
  */
+
 
 (function( $ )
 {
@@ -37,8 +38,7 @@
 		}
 
 
-		var $dot = this,
-			$tt0 = this[ 0 ];
+		var $dot = this;
 
 		if ( $dot.data( 'dotdotdot' ) )
 		{
@@ -64,7 +64,7 @@
 					{
 						if ( typeof c == 'string' || c instanceof HTMLElement )
 						{
-					 		c = $('<div />').append(c).contents();
+					 		c = $('<div />').append( c ).contents();
 						}
 						if ( c instanceof $ )
 						{
@@ -72,8 +72,16 @@
 						}
 					}
 
-					$inr.empty();
-					$inr.append( orgContent.clone( true ) );
+					$inr = $dot.wrapInner( '<div class="dotdotdot" />' ).children();
+					$inr.empty()
+						.append( orgContent.clone( true ) )
+						.css({
+							'height'	: 'auto',
+							'width'		: 'auto',
+							'border'	: 'none',
+							'padding'	: 0,
+							'margin'	: 0
+						});
 
 					var after = false,
 						trunc = false;
@@ -91,14 +99,22 @@
 						}
 						else
 						{
-							trunc = ellipsis( $inr, $inr, opts, after );
+							trunc = ellipsis( $inr, $dot, $inr, opts, after );
 						}
 					}
+					$inr.replaceWith( $inr.contents() );
+					$inr = null;
+					
+					if ( $.isFunction( opts.callback ) )
+					{
+						opts.callback.call( $dot[ 0 ], trunc, orgContent );
+					}
+
 					conf.isTruncated = trunc;
 					return trunc;
 				}
-			);
-			$dot.bind(
+
+			).bind(
 				'isTruncated.dot',
 				function( e, fn )
 				{
@@ -107,12 +123,12 @@
 
 					if ( typeof fn == 'function' )
 					{
-						fn.call( $tt0, conf.isTruncated );
+						fn.call( $dot[ 0 ], conf.isTruncated );
 					}
 					return conf.isTruncated;
 				}
-			);
-			$dot.bind(
+
+			).bind(
 				'originalContent.dot',
 				function( e, fn )
 				{
@@ -121,30 +137,32 @@
 
 					if ( typeof fn == 'function' )
 					{
-						fn.call( $tt0, orgContent );
+						fn.call( $dot[ 0 ], orgContent );
 					}
 					return orgContent;
 				}
-			);
-			$dot.bind(
+
+			).bind(
 				'destroy.dot',
 				function( e )
 				{
 					e.preventDefault();
 					e.stopPropagation();
 
-					$dot.unwatch();
-					$dot.unbind_events();
-					$dot.empty();
-					$dot.append( orgContent );
-					$dot.data( 'dotdotdot', false );
+					$dot.unwatch()
+						.unbind_events()
+						.empty()
+						.append( orgContent )
+						.data( 'dotdotdot', false );
 				}
 			);
+			return $dot;
 		};	//	/bind_events
 
 		$dot.unbind_events = function()
 		{
 			$dot.unbind('.dot');
+			return $dot;
 		};	//	/unbind_events
 
 		$dot.watch = function()
@@ -152,20 +170,30 @@
 			$dot.unwatch();
 			if ( opts.watch == 'window' )
 			{
-				$(window).bind(
-					'resize.dot',
+				var $window = $(window),
+					_wWidth = $window.width(),
+					_wHeight = $window.height(); 
+
+				$window.bind(
+					'resize.dot' + conf.dotId,
 					function()
 					{
-						if ( watchInt )
+						if ( _wWidth != $window.width() || _wHeight != $window.height() || !opts.windowResizeFix )
 						{
-							clearInterval( watchInt );
-						}
-						watchInt = setTimeout(
-							function()
+							_wWidth = $window.width();
+							_wHeight = $window.height();
+	
+							if ( watchInt )
 							{
-								$dot.trigger( 'update.dot' );
-							}, 10
-						);
+								clearInterval( watchInt );
+							}
+							watchInt = setTimeout(
+								function()
+								{
+									$dot.trigger( 'update.dot' );
+								}, 10
+							);
+						}
 					}
 				);
 			}
@@ -185,13 +213,16 @@
 					}, 100
 				);
 			}
+			return $dot;
 		};
 		$dot.unwatch = function()
 		{
+			$(window).unbind( 'resize.dot' + conf.dotId );
 			if ( watchInt )
 			{
 				clearInterval( watchInt );
 			}
+			return $dot;
 		};
 
 		var	orgContent	= $dot.contents(),
@@ -199,19 +230,17 @@
 			conf		= {},
 			watchOrg	= {},
 			watchInt	= null,
-			$inr		= $dot.wrapInner( '<' + opts.wrapper + ' class="dotdotdot" />' ).children();
+			$inr		= null;
 
-		conf.afterElement	= getElement( opts.after, $inr );
+		conf.afterElement	= getElement( opts.after, $dot );
 		conf.isTruncated	= false;
+		conf.dotId			= dotId++;
 
-		$inr.css({
-			'height'	: 'auto',
-			'width'		: 'auto'
-		});
 
-		$dot.data( 'dotdotdot', true );
-		$dot.bind_events();
-		$dot.trigger( 'update.dot' );
+		$dot.data( 'dotdotdot', true )
+			.bind_events()
+			.trigger( 'update.dot' );
+
 		if ( opts.watch )
 		{
 			$dot.watch();
@@ -221,25 +250,31 @@
 	};
 
 
-
 	//	public
 	$.fn.dotdotdot.defaults = {
-		'wrapper'	: 'div',
 		'ellipsis'	: '... ',
 		'wrap'		: 'word',
+		'lastCharacter': {
+			'remove'		: [ ' ', ',', ';', '.', '!', '?' ],
+			'noEllipsis'	: []
+		},
 		'tolerance'	: 0,
+		'callback'	: null,
 		'after'		: null,
 		'height'	: null,
 		'watch'		: false,
+		'windowResizeFix': true,
 		'debug'		: false
 	};
 	
 
 	//	private
-	function children($elem, o, after)
+	var dotId = 1;
+
+	function children( $elem, o, after )
 	{
-		var $elements = $elem.children(),
-			isTruncated = false;
+		var $elements 	= $elem.children(),
+			isTruncated	= false;
 
 		$elem.empty();
 
@@ -267,15 +302,14 @@
 		}
 		return isTruncated;
 	}
-	function ellipsis( $elem, $i, o, after )
+	function ellipsis( $elem, $d, $i, o, after )
 	{
-		var $elements = $elem.contents(),
-			isTruncated = false;
+		var $elements 	= $elem.contents(),
+			isTruncated	= false;
 
 		$elem.empty();
 
 		var notx = 'table, thead, tbody, tfoot, tr, col, colgroup, object, embed, param, ol, ul, dl, select, optgroup, option, textarea, script, style, a';
-
 		for ( var a = 0, l = $elements.length; a < l; a++ )
 		{
 
@@ -304,12 +338,12 @@
 			{
 				if ( test( $i, o ) )
 				{
-					isTruncated = ellipsisElement( $e, $i, o, after );
+					isTruncated = ellipsisElement( $e, $d, $i, o, after );
 				}
 			}
 			else
 			{
-				isTruncated = ellipsis( $e, $i, o, after );
+				isTruncated = ellipsis( $e, $d, $i, o, after );
 			}
 
 			if ( !isTruncated )
@@ -322,7 +356,7 @@
 		}
 		return isTruncated;
 	}
-	function ellipsisElement( $e, $i, o, after )
+	function ellipsisElement( $e, $d, $i, o, after )
 	{
 		var isTruncated	= false,
 			e			= $e[ 0 ];
@@ -333,30 +367,50 @@
 		}
 
 		var seporator	= ( o.wrap == 'letter' ) ? '' : ' ',
-			textArr		= getTextContent( e ).split( seporator );
+			textArr		= getTextContent( e ).split( seporator ),
+			position 	= -1,
+			midPos		= -1,
+			startPos	= 0,
+			endPos		= textArr.length - 1;
 
-		setTextContent( e, textArr.join( seporator ) + o.ellipsis );
-
-		for ( var a = textArr.length - 1; a >= 0; a-- )
+		while ( startPos <= endPos )
 		{
-			if ( test( $i, o ) )
+			var m = Math.floor( ( startPos + endPos ) / 2 );
+			if ( m == midPos ) 
 			{
-				var end = getTextContent( e ).length - ( textArr[ a ].length + seporator.length + o.ellipsis.length ),
-					txt = ( end > 0 ) 
-						? getTextContent( e ).substring( 0, end )
-						: '';
+				break;
+			}
+			midPos = m;
 
-				setTextContent( e, txt + o.ellipsis );
+			setTextContent( e, textArr.slice( 0, midPos + 1 ).join( seporator ) + o.ellipsis );
 
+			if ( !test( $i, o ) )
+			{
+				position	= midPos;
+				startPos	= midPos; 
 			}
 			else
 			{
-				isTruncated = true;
-				break;
-			}
-		}
+				endPos		= midPos;
+			}				
+		}	
+	
+		if ( position != -1 )
+		{
+			var txt = textArr.slice( 0, position + 1 ).join( seporator );
+			isTruncated = true;
 
-		if ( !isTruncated )
+			while( $.inArray( txt.slice( -1 ), o.lastCharacter.remove ) > -1 )
+			{
+				txt = txt.slice( 0, -1 );
+			}
+			if ( $.inArray( txt.slice( -1 ), o.lastCharacter.noEllipsis ) < 0 )
+			{
+				txt += o.ellipsis;
+			}
+			setTextContent( e, txt );
+		}
+		else
 		{
 			var $w = $e.parent();
 			$w.replaceWith($e);
@@ -442,7 +496,7 @@
 			a = [ 'paddingTop', 'paddingBottom' ];
 
 		for ( z = 0, l = a.length; z < l; z++ ) {
-			var m = parseInt( $el.css( a[ z ] ) );
+			var m = parseInt( $el.css( a[ z ] ), 10 );
 			if ( isNaN( m ) )
 			{
 				m = 0;
@@ -473,30 +527,42 @@
 		return false;
 	}
 	
+
 	//	override jQuery.html
 	var _orgHtml = $.fn.html;
     $.fn.html = function( str ) {
-		if ( typeof str == 'string' && this.data( 'dotdotdot' ) )
+		if ( typeof str != 'undefined' )
 		{
-			this.trigger( 'update', str );
-			return this;
+			if ( this.data( 'dotdotdot' ) )
+			{
+				if ( typeof str != 'function' )
+				{
+					return this.trigger( 'update', [ str ] );
+				}
+			}
+			return _orgHtml.call( this, str );
 		}
-        return _orgHtml.call( this, str );
+		return _orgHtml.call( this );
     };
+
 
 	//	override jQuery.text
 	var _orgText = $.fn.text;
     $.fn.text = function( str ) {
-		if ( typeof str == 'string' && this.data( 'dotdotdot' ) )
+		if ( typeof str != 'undefined' )
 		{
-			var temp = $( '<div />' );
-			temp.text( str );
-			str = temp.html();
-			temp.remove();
-			this.trigger( 'update', str );
-			return this;
+			if ( this.data( 'dotdotdot' ) )
+			{
+				var temp = $( '<div />' );
+				temp.text( str );
+				str = temp.html();
+				temp.remove();
+				return this.trigger( 'update', [ str ] );
+			}
+			return _orgText.call( this, str );
 		}
-        return _orgText.call( this, str );
+        return _orgText.call( this );
     };
+
 
 })( jQuery );
